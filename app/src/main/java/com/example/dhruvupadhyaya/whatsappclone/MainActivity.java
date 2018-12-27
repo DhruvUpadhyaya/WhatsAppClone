@@ -115,6 +115,7 @@ public class MainActivity extends AppCompatActivity {
         PhoneAuthProvider.getInstance().verifyPhoneNumber(mPhoneNumber.getText().toString()
                 ,60
                 ,TimeUnit.SECONDS
-                ,this,mCallbacks);
+                ,this
+                ,mCallbacks);
     }
 }
