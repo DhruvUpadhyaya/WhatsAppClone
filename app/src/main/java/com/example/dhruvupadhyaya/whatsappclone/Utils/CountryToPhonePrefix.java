@@ -1,4 +1,4 @@
-package com.example.dhruvupadhyaya.whatsappclone;
+package com.example.dhruvupadhyaya.whatsappclone.Utils;
 
 import java.util.HashMap;
 import java.util.Map;

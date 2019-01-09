@@ -1,14 +1,17 @@
-package com.example.dhruvupadhyaya.whatsappclone;
+package com.example.dhruvupadhyaya.whatsappclone.User;
 
 public class UserObject {
     private String name;
     private String phone;
+    private String uid;
 
-    public UserObject(String name, String phone) {
+    public UserObject(String uid, String name, String phone) {
+        this.uid = uid;
         this.name = name;
         this.phone = phone;
     }
 
+    public String getUid(){ return uid; }
     public String getName() {
         return name;
     }
@@ -17,11 +20,11 @@ public class UserObject {
         return phone;
     }
 
+
+
     public void setName(String name) {
         this.name = name;
     }
 
-    public void setPhone(String phone) {
-        this.phone = phone;
-    }
+
 }

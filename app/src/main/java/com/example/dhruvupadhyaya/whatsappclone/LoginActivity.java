@@ -140,7 +140,7 @@ public class LoginActivity extends AppCompatActivity {
 
             startActivity(new Intent(getApplicationContext(),MainPageActivity.class));
             finish();
-            return;
+            //return;
         }
     }
 
