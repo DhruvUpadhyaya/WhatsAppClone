@@ -1,6 +1,7 @@
 package com.example.dhruvupadhyaya.whatsappclone;
 
 import android.content.Intent;
+import android.net.Uri;
 import android.support.annotation.NonNull;
 import android.support.annotation.Nullable;
 import android.support.v7.app.AppCompatActivity;
@@ -16,12 +17,16 @@ import com.example.dhruvupadhyaya.whatsappclone.Chat.ChatObject;
 import com.example.dhruvupadhyaya.whatsappclone.Chat.MediaAdapter;
 import com.example.dhruvupadhyaya.whatsappclone.Chat.MessageAdapter;
 import com.example.dhruvupadhyaya.whatsappclone.Chat.MessageObject;
+import com.google.android.gms.tasks.OnSuccessListener;
 import com.google.firebase.auth.FirebaseAuth;
 import com.google.firebase.database.ChildEventListener;
 import com.google.firebase.database.DataSnapshot;
 import com.google.firebase.database.DatabaseError;
 import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
+import com.google.firebase.storage.FirebaseStorage;
+import com.google.firebase.storage.StorageReference;
+import com.google.firebase.storage.UploadTask;
 
 import java.util.ArrayList;
 import java.util.HashMap;
@@ -83,6 +88,7 @@ public class ChatActivity extends AppCompatActivity {
                 if (dataSnapshot.exists()){
                     String text = "";
                     String creatorID = "";
+                    ArrayList<String> mediaUrlList = new ArrayList<>();
 
                     if (dataSnapshot.child("text").getValue() != null){
 
@@ -94,8 +100,14 @@ public class ChatActivity extends AppCompatActivity {
                         creatorID = dataSnapshot.child("creator").getValue().toString();
 
                     }
+                    if (dataSnapshot.child("media").getChildrenCount() >  0){
+                        for (DataSnapshot mediaSnapshot : dataSnapshot.child("media").getChildren()){
+                            mediaUrlList.add(mediaSnapshot.getValue().toString());
+                        }
 
-                    MessageObject mMessage = new MessageObject(dataSnapshot.getKey(),creatorID,text);
+                    }
+
+                    MessageObject mMessage = new MessageObject(dataSnapshot.getKey(),creatorID,text,mediaUrlList);
 
                     messageList.add(mMessage);
                     mChatLayoutManager.scrollToPosition(messageList.size() - 1);
@@ -126,25 +138,72 @@ public class ChatActivity extends AppCompatActivity {
 
     }
 
+
+    EditText mMessage;
+    int totalMediaUploaded = 0;
+    ArrayList<String> mediaIdList = new ArrayList<>();
     private void sendMessage(){
 
-        EditText mMessage = findViewById(R.id.messageEditText);
+         mMessage = findViewById(R.id.messageEditText);
+         String messageId = mChatDb.push().getKey();
+         final DatabaseReference newMessageDb = mChatDb.child(messageId);
 
-        if (!mMessage.getText().toString().isEmpty()){
-            DatabaseReference newMessageDb = mChatDb.push();
+         final  Map newMessageMap = new HashMap<>();
 
-            Map newMessageMap = new HashMap<>();
-            newMessageMap.put("text",mMessage.getText().toString());
-            newMessageMap.put("creator",FirebaseAuth.getInstance().getUid());
 
-            newMessageDb.updateChildren(newMessageMap);
+         newMessageMap.put("creator",FirebaseAuth.getInstance().getUid());
 
-        }
+          if (!mMessage.getText().toString().isEmpty()){
+              newMessageMap.put("text",mMessage.getText().toString());
+          }
 
-        mMessage.setText(null);
+
+          if(!mediaUriList.isEmpty()){
+                for (String mediaUri : mediaUriList){
+                    String mediaId = newMessageDb.child("media").push().getKey();
+
+                    mediaIdList.add(mediaId);
+
+                    final StorageReference filePath = FirebaseStorage.getInstance().getReference().child("chat").child(chatID).child(messageId).child(mediaId);
+
+                    UploadTask uploadTask = filePath.putFile(Uri.parse(mediaUri));
+
+                    uploadTask.addOnSuccessListener(new OnSuccessListener<UploadTask.TaskSnapshot>() {
+                        @Override
+                        public void onSuccess(UploadTask.TaskSnapshot taskSnapshot) {
+
+                            filePath.getDownloadUrl().addOnSuccessListener(new OnSuccessListener<Uri>() {
+                                @Override
+                                public void onSuccess(Uri uri) {
+
+                                    newMessageMap.put("/media/"+ mediaIdList.get(totalMediaUploaded)+"/",uri.toString());
+
+                                    totalMediaUploaded++;
+                                    if (totalMediaUploaded == mediaUriList.size()){
+
+                                        updateDatabaseWithNewMessage(newMessageDb,newMessageMap);
+                                    }
+                                }
+                            });
+                        }
+                    });
+                }
+            }else {
+              if (!mMessage.getText().toString().isEmpty()){
+                    updateDatabaseWithNewMessage(newMessageDb,newMessageMap);
+                }
+            }
 
     }
 
+    private void updateDatabaseWithNewMessage(DatabaseReference newMessageDb,Map newMessageMap){
+        newMessageDb.updateChildren(newMessageMap);
+
+        mMessage.setText(null);
+        mediaIdList.clear();
+        mediaUriList.clear();
+        mMediaAdapter.notifyDataSetChanged();
+    }
     private void initializeMessage() {
 
         messageList = new ArrayList<>();
@@ -170,6 +229,7 @@ public class ChatActivity extends AppCompatActivity {
 
 
 
+       // mediaUriList = new ArrayList<>();
         mMedia = findViewById(R.id.mediaList);
         mMedia.setNestedScrollingEnabled(false);
         mMedia.setHasFixedSize(false);
