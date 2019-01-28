@@ -10,9 +10,11 @@ import android.widget.TextView;
 
 import com.example.dhruvupadhyaya.whatsappclone.R;
 import com.google.firebase.auth.FirebaseAuth;
+import com.google.firebase.database.DatabaseReference;
 import com.google.firebase.database.FirebaseDatabase;
 
 import java.util.ArrayList;
+import java.util.HashMap;
 
 public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserListViewHolder> {
 
@@ -35,7 +37,7 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserLi
     }
 
     @Override
-    public void onBindViewHolder(@NonNull UserListViewHolder userListViewHolder,final int i) {
+    public void onBindViewHolder(@NonNull final UserListViewHolder userListViewHolder, final int i) {
 
         userListViewHolder.mName.setText(userList.get(i).getName());
         userListViewHolder.mPhone.setText(userList.get(i).getPhone());
@@ -45,16 +47,35 @@ public class UserListAdapter extends RecyclerView.Adapter<UserListAdapter.UserLi
             @Override
             public void onClick(View v) {
 
-                String key = FirebaseDatabase.getInstance().getReference().child("chat").push().getKey();
+                createChat(userListViewHolder.getAdapterPosition());
 
-                FirebaseDatabase.getInstance().getReference().child("user").child(FirebaseAuth.getInstance().getUid()).child("chat").child(key).setValue(true);
-                FirebaseDatabase.getInstance().getReference().child("user").child(userList.get(i).getUid()).child("chat").child(key).setValue(true);
+
 
 
             }
         });
 
     }
+
+    private void createChat(int i){
+        String key = FirebaseDatabase.getInstance().getReference().child("chat").push().getKey();
+
+
+        HashMap newChatMap = new HashMap();
+        newChatMap.put("id",key);
+        newChatMap.put("users/"+FirebaseAuth.getInstance().getUid(),true);
+        newChatMap.put("users/"+userList.get(i).getUid(),true);
+
+        DatabaseReference chatInfoDb = FirebaseDatabase.getInstance().getReference().child("chat").child(key).child("info");
+        chatInfoDb.updateChildren(newChatMap);
+
+
+
+        DatabaseReference mUserDb = FirebaseDatabase.getInstance().getReference().child("user");
+        mUserDb.child(FirebaseAuth.getInstance().getUid()).child("chat").child(key).setValue(true);
+        mUserDb.child(userList.get(i).getUid()).child("chat").child(key).setValue(true);
+    }
+
 
     @Override
     public int getItemCount() {
