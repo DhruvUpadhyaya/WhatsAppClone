@@ -1,6 +1,8 @@
 package com.example.dhruvupadhyaya.whatsappclone.User;
 
-public class UserObject {
+import java.io.Serializable;
+
+public class UserObject implements Serializable {
     private String name;
     private String phone;
     private String uid;

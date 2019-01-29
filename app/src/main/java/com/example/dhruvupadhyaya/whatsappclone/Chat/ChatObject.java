@@ -2,9 +2,10 @@ package com.example.dhruvupadhyaya.whatsappclone.Chat;
 
 import com.example.dhruvupadhyaya.whatsappclone.User.UserObject;
 
+import java.io.Serializable;
 import java.util.ArrayList;
 
-public class ChatObject {
+public class ChatObject implements Serializable {
 
     private String chatId;
 
