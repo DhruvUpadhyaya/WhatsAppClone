@@ -40,6 +40,7 @@ public class MainPageActivity extends AppCompatActivity {
     protected void onCreate(Bundle savedInstanceState) {
         super.onCreate(savedInstanceState);
         setContentView(R.layout.activity_main_page);
+        FirebaseDatabase.getInstance().setPersistenceEnabled(true);
 
         OneSignal.startInit(this).init();
         OneSignal.setSubscription(true);
